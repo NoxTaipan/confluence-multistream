@@ -75,6 +75,7 @@ bool obs_module_load()
 
             for(auto x: dock->GetAllPushWidgets())
                 x->OnOBSEvent(event);
+            dock->OnOBSEvent(event);
 
             if (event == obs_frontend_event::OBS_FRONTEND_EVENT_EXIT)
             {   

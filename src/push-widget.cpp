@@ -3,6 +3,8 @@
 #include <regex>
 #include <optional>
 #include <tuple>
+#include <QHBoxLayout>
+#include <QPixmap>
 #include "push-widget.h"
 #include "edit-widget.h"
 #include "output-config.h"
@@ -107,6 +109,7 @@ class PushWidgetImpl : public PushWidget, public IOBSOutputEventHanlder
     OutputTargetConfigPtr config_;
 
     QPushButton* btn_ = 0;
+    QLabel* badge_ = 0;
     QLabel* name_ = 0;
     QLabel* msg_ = 0;
 
@@ -569,7 +572,21 @@ public:
         });
 
         auto layout = new QGridLayout(this);
-        layout->addWidget(name_ = new QLabel(obs_module_text("NewStreaming"), this), 0, 0, 1, 3);
+
+        auto headerRow = new QWidget(this);
+        auto headerLayout = new QHBoxLayout(headerRow);
+        headerLayout->setContentsMargins(0, 0, 0, 0);
+        headerLayout->setSpacing(6);
+        badge_ = new QLabel(headerRow);
+        badge_->setFixedSize(18, 18);
+        badge_->setAlignment(Qt::AlignCenter);
+        name_ = new QLabel(obs_module_text("NewStreaming"), headerRow);
+        headerLayout->addWidget(badge_);
+        headerLayout->addWidget(name_);
+        headerLayout->addStretch();
+        headerRow->setLayout(headerLayout);
+        layout->addWidget(headerRow, 0, 0, 1, 3);
+
         layout->addWidget(btn_ = new QPushButton(obs_module_text("Btn.Start"), this), 1, 0);
         QObject::connect(btn_, &QPushButton::clicked, [this]() {
             StartStop();
@@ -747,9 +764,39 @@ public:
         }
     }
 
+    // Insignia de plataforma detectada por el nombre del target (no hay un
+    // campo de "plataforma" real en la config, es un target RTMP/SRT/WHIP
+    // generico) - mismo icono real de marca que usa Confluence Chat
+    // (data/icons/*.png, generados desde Simple Icons).
+    void UpdateBadge()
+    {
+        if (!badge_) return;
+
+        QString name = QString::fromUtf8(config_->name).toLower();
+        const char* iconFile = nullptr;
+
+        if (name.contains("twitch")) iconFile = "icons/twitch.png";
+        else if (name.contains("youtube")) iconFile = "icons/youtube.png";
+        else if (name.contains("kick")) iconFile = "icons/kick.png";
+
+        if (!iconFile) {
+            badge_->setVisible(false);
+            return;
+        }
+
+        char* path = obs_module_file(iconFile);
+        if (path) {
+            QPixmap pix(QString::fromUtf8(path));
+            badge_->setPixmap(pix.scaled(18, 18, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+            bfree(path);
+        }
+        badge_->setVisible(true);
+    }
+
     void LoadConfig()
     {
         name_->setText(QString::fromUtf8(config_->name));
+        UpdateBadge();
     }
 
     void ResetInfo()

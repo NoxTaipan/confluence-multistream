@@ -59,12 +59,50 @@ MultiOutputWidget::MultiOutputWidget(QWidget* parent)
         "QLineEdit:focus, QComboBox:focus { border-color: #6ee7b7; }"
         "QScrollArea { background-color: #0c0e13; border: none; }"
         "QCheckBox { color: #e6e8ee; }"
+        "#mainStreamButton { border-color: #6ee7b7; font-weight: 700; }"
     ).arg(fontStack));
 
     container_ = new QWidget(&scroll_);
     container_->setAttribute(Qt::WA_StyledBackground, true);
     layout_ = new QVBoxLayout(container_);
     layout_->setAlignment(Qt::AlignmentFlag::AlignTop);
+
+    // branded header - same mark/title/suite-tag pattern as the Confluence
+    // and Confluence Chat web docks, so all 3 read as one product family
+    auto headerRow = new QWidget(container_);
+    auto headerLayout = new QHBoxLayout(headerRow);
+    headerLayout->setContentsMargins(0, 0, 0, 4);
+    headerLayout->setSpacing(8);
+    auto brandMark = new QLabel(headerRow);
+    brandMark->setFixedSize(16, 16);
+    brandMark->setStyleSheet(
+        "background: qlineargradient(x1:0, y1:0, x2:1, y2:1,"
+        "  stop:0 #6ee7b7, stop:0.6 #9146ff, stop:1 #ff3b5c);"
+        "border-radius: 5px;"
+    );
+    auto titleLabel = new QLabel(obs_module_text("Title"), headerRow);
+    titleLabel->setStyleSheet(QStringLiteral("color: #e6e8ee; font-weight: 700; font-size: 15px; font-family: %1;").arg(fontStack));
+    headerLayout->addWidget(brandMark);
+    headerLayout->addWidget(titleLabel);
+    headerLayout->addStretch();
+    headerRow->setLayout(headerLayout);
+    layout_->addWidget(headerRow);
+
+    auto suiteTag = new QLabel(u8"CONFLUENCE SUITE", container_);
+    suiteTag->setStyleSheet("color: #9096ac; font-size: 9px; font-weight: 600; margin-left: 24px; margin-bottom: 8px;");
+    layout_->addWidget(suiteTag);
+
+    // main OBS output (e.g. Twitch) start/stop - native obs-frontend-api, not a multi-rtmp target
+    mainStreamButton_ = new QPushButton(container_);
+    mainStreamButton_->setObjectName("mainStreamButton");
+    QObject::connect(mainStreamButton_, &QPushButton::clicked, [this]() {
+        if (obs_frontend_streaming_active())
+            obs_frontend_streaming_stop();
+        else
+            obs_frontend_streaming_start();
+    });
+    layout_->addWidget(mainStreamButton_);
+    UpdateMainStreamButton();
 
     // init widget
     auto addButton = new QPushButton(obs_module_text("Btn.NewTarget"), container_);
@@ -99,13 +137,34 @@ MultiOutputWidget::MultiOutputWidget(QWidget* parent)
     allBtnContainer->setLayout(allBtnLayout);
     layout_->addWidget(allBtnContainer);
 
+    // Start/stop en orden (Twitch primero, despues cada target en el orden
+    // de la lista) con un pequeno delay entre cada uno - no espera a que el
+    // anterior confirme conexion, solo evita disparar todo en el mismo instante.
     QObject::connect(startAllButton, &QPushButton::clicked, [this]() {
-        for (auto x : GetAllPushWidgets())
-            x->StartStreaming();
+        const int stepMs = 800;
+        int delayMs = 0;
+        QTimer::singleShot(delayMs, this, []() {
+            if (!obs_frontend_streaming_active())
+                obs_frontend_streaming_start();
+        });
+        delayMs += stepMs;
+        for (auto x : GetAllPushWidgets()) {
+            QTimer::singleShot(delayMs, this, [x]() { x->StartStreaming(); });
+            delayMs += stepMs;
+        }
     });
     QObject::connect(stopAllButton, &QPushButton::clicked, [this]() {
-        for (auto x : GetAllPushWidgets())
-            x->StopStreaming();
+        const int stepMs = 800;
+        int delayMs = 0;
+        QTimer::singleShot(delayMs, this, []() {
+            if (obs_frontend_streaming_active())
+                obs_frontend_streaming_stop();
+        });
+        delayMs += stepMs;
+        for (auto x : GetAllPushWidgets()) {
+            QTimer::singleShot(delayMs, this, [x]() { x->StopStreaming(); });
+            delayMs += stepMs;
+        }
     });
     
     // load config
@@ -547,6 +606,33 @@ bool MultiOutputWidget::UpdateSyncStop(const QString& targetId, bool syncStop)
     
     blog(LOG_WARNING, TAG "UpdateSyncStop failed: Target not found %s", targetId.toUtf8().constData());
     return false;
+}
+
+void MultiOutputWidget::UpdateMainStreamButton()
+{
+    if (!mainStreamButton_) return;
+
+    bool active = obs_frontend_streaming_active();
+    mainStreamButton_->setText(active
+        ? obs_module_text("Btn.StopMainStream")
+        : obs_module_text("Btn.StartMainStream"));
+    mainStreamButton_->setStyleSheet(active
+        ? "background-color: #1c3b30; color: #6ee7b7; border-color: #45d9a0; font-weight: 700;"
+        : "");
+}
+
+void MultiOutputWidget::OnOBSEvent(obs_frontend_event event)
+{
+    switch (event) {
+    case OBS_FRONTEND_EVENT_STREAMING_STARTING:
+    case OBS_FRONTEND_EVENT_STREAMING_STARTED:
+    case OBS_FRONTEND_EVENT_STREAMING_STOPPING:
+    case OBS_FRONTEND_EVENT_STREAMING_STOPPED:
+        UpdateMainStreamButton();
+        break;
+    default:
+        break;
+    }
 }
 
 PushWidget* MultiOutputWidget::FindPushWidgetById(const QString& targetId)

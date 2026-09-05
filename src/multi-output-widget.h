@@ -8,11 +8,12 @@ class MultiOutputWidget : public QWidget
     Q_OBJECT
 public:
     MultiOutputWidget(QWidget* parent = 0);
-    
+
     std::vector<PushWidget*> GetAllPushWidgets();
     void SaveConfig();
     void LoadConfig();
-    
+    void OnOBSEvent(obs_frontend_event event);
+
 public slots:  // ✅ CHANGED: Declare RefreshUI as a slot
     void RefreshUI();
     
@@ -28,8 +29,11 @@ public slots:  // ✅ CHANGED: Declare RefreshUI as a slot
     PushWidget* FindPushWidgetById(const QString& targetId);
 
 private:
+    void UpdateMainStreamButton();
+
     QWidget* container_ = 0;
     QScrollArea scroll_;
     QVBoxLayout* itemLayout_ = 0;
     QVBoxLayout* layout_ = 0;
+    QPushButton* mainStreamButton_ = 0;
 };
