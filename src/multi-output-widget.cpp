@@ -12,13 +12,57 @@
 #include <QDialog>
 #include <QTabWidget>
 #include <QMainWindow>
+#include <QFontDatabase>
+
+static QString LoadBrandFontFamily()
+{
+    static QString cachedFamily;
+    if (!cachedFamily.isEmpty()) return cachedFamily;
+
+    const char* fontPath = obs_module_file("fonts/IBMPlexSans.ttf");
+    if (!fontPath) return QString();
+
+    int fontId = QFontDatabase::addApplicationFont(QString::fromUtf8(fontPath));
+    bfree((void*)fontPath);
+    if (fontId == -1) return QString();
+
+    auto families = QFontDatabase::applicationFontFamilies(fontId);
+    if (families.isEmpty()) return QString();
+
+    cachedFamily = families.first();
+    return cachedFamily;
+}
 
 MultiOutputWidget::MultiOutputWidget(QWidget* parent)
     : QWidget(parent)
 {
     setWindowTitle(obs_module_text("Title"));
 
+    QString brandFont = LoadBrandFontFamily();
+    QString fontStack = brandFont.isEmpty()
+        ? QStringLiteral("\"Segoe UI\", sans-serif")
+        : QStringLiteral("\"%1\", \"Segoe UI\", sans-serif").arg(brandFont);
+
+    setAttribute(Qt::WA_StyledBackground, true);
+    setStyleSheet(QStringLiteral(
+        "QWidget { background-color: #0c0e13; color: #e6e8ee; font-size: 13px; font-family: %1; }"
+        "QPushButton {"
+        "  background-color: #1c202b; color: #e6e8ee; border: 1px solid #262b38;"
+        "  border-radius: 6px; padding: 8px 10px; font-weight: 600; }"
+        "QPushButton:hover { background-color: #232838; border-color: #6ee7b7; }"
+        "QPushButton:pressed { background-color: #161922; }"
+        "QPushButton:focus { border-color: #6ee7b7; }"
+        "QLabel { color: #9096ac; }"
+        "QLineEdit, QComboBox {"
+        "  background-color: #161922; color: #e6e8ee; border: 1px solid #262b38;"
+        "  border-radius: 6px; padding: 5px 7px; }"
+        "QLineEdit:focus, QComboBox:focus { border-color: #6ee7b7; }"
+        "QScrollArea { background-color: #0c0e13; border: none; }"
+        "QCheckBox { color: #e6e8ee; }"
+    ).arg(fontStack));
+
     container_ = new QWidget(&scroll_);
+    container_->setAttribute(Qt::WA_StyledBackground, true);
     layout_ = new QVBoxLayout(container_);
     layout_->setAlignment(Qt::AlignmentFlag::AlignTop);
 
@@ -145,10 +189,10 @@ MultiOutputWidget::MultiOutputWidget(QWidget* parent)
     }
     else
     {
-        auto label = new QLabel(u8"<p>This plugin is provided for free. <br>Author: SoraYuki (<a href=\"https://paypal.me/sorayuki0\">donate</a>) </p>", container_);
+        auto label = new QLabel(u8"<p>Confluence Multistream — by NOX TAIPAN</p>", container_);
         label->setTextFormat(Qt::RichText);
-        label->setTextInteractionFlags(Qt::TextBrowserInteraction);
-        label->setOpenExternalLinks(true);
+        label->setAlignment(Qt::AlignCenter);
+        label->setStyleSheet("color: #7d8399; font-size: 11px;");
         layout_->addWidget(label);
     }
 
