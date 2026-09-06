@@ -30,6 +30,7 @@ public slots:  // ✅ CHANGED: Declare RefreshUI as a slot
 
 private:
     void UpdateMainStreamButton();
+    void UpdateMainStreamStats();
     void CheckConfluenceStatus();
     void RestartConfluenceServer();
 
@@ -43,6 +44,15 @@ private:
     // en push-widget.cpp para el mismo patron de carga de icono.
     QLabel* mainStreamBadge_ = 0;
     QLabel* mainStreamDot_ = 0;
+    // Linea de stats (duracion/bitrate/FPS), mismo calculo y formato que
+    // PushWidgetImpl::UpdateStreamStatus pero sobre el output principal de OBS
+    // (obs_frontend_get_streaming_output) en vez de un output propio del plugin.
+    QLabel* mainStreamMsg_ = 0;
+    QTimer* mainStreamStatsTimer_ = 0;
+    std::chrono::steady_clock::time_point mainStreamBeginTime_;
+    std::chrono::steady_clock::time_point mainStreamLastInfoTime_;
+    uint64_t mainStreamTotalFrames_ = 0;
+    uint64_t mainStreamTotalBytes_ = 0;
 
     // Confluence (Stream Info / Chat / Overlay) corre como un servidor Node
     // aparte de este plugin - este bloque solo lo monitorea/reinicia desde

@@ -16,6 +16,9 @@
 #include <QFontDatabase>
 #include <QProcess>
 #include <fstream>
+#include <chrono>
+#include <cmath>
+#include "obs.hpp"
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -143,7 +146,10 @@ MultiOutputWidget::MultiOutputWidget(QWidget* parent)
     // un boton ancho suelto - se agrega mas abajo, justo arriba de la lista de targets.
     auto mainStreamRow = new QWidget(container_);
     auto mainStreamRowLayout = new QVBoxLayout(mainStreamRow);
-    mainStreamRowLayout->setContentsMargins(0, 0, 0, 0);
+    // Mismo margen inferior que separa cada fila de target de la siguiente
+    // (PushWidgetImpl usa un QSpacerItem(0, 10) al final de su grid) - sin esto
+    // la fila de Twitch quedaba pegada contra la de Youtube.
+    mainStreamRowLayout->setContentsMargins(0, 0, 0, 10);
     mainStreamRowLayout->setSpacing(6);
 
     auto mainStreamHeader = new QWidget(mainStreamRow);
@@ -178,8 +184,18 @@ MultiOutputWidget::MultiOutputWidget(QWidget* parent)
             obs_frontend_streaming_start();
     });
     mainStreamRowLayout->addWidget(mainStreamButton_);
+
+    mainStreamMsg_ = new QLabel(u8"", mainStreamRow);
+    mainStreamMsg_->setStyleSheet("font-size: 11px;");
+    mainStreamMsg_->setWordWrap(true);
+    mainStreamRowLayout->addWidget(mainStreamMsg_);
+
     mainStreamRow->setLayout(mainStreamRowLayout);
     UpdateMainStreamButton();
+
+    mainStreamStatsTimer_ = new QTimer(this);
+    mainStreamStatsTimer_->setInterval(std::chrono::milliseconds(1000));
+    QObject::connect(mainStreamStatsTimer_, &QTimer::timeout, this, &MultiOutputWidget::UpdateMainStreamStats);
 
     // init widget
     auto addButton = new QPushButton(obs_module_text("Btn.NewTarget"), container_);
@@ -764,13 +780,80 @@ void MultiOutputWidget::UpdateMainStreamButton()
     }
 }
 
+void MultiOutputWidget::UpdateMainStreamStats()
+{
+    if (!mainStreamMsg_) return;
+
+    OBSOutputAutoRelease output = obs_frontend_get_streaming_output();
+    if (!output) return;
+
+    static const char* units[] = {
+        "bps", "Kbps", "Mbps", "Gbps", "Tbps", "Pbps", "Ebps", "Zbps", "Ybps"
+    };
+
+    auto new_bytes = obs_output_get_total_bytes(output);
+    auto new_frames = obs_output_get_total_frames(output);
+    auto now = std::chrono::steady_clock::now();
+
+    auto interval = std::chrono::duration_cast<std::chrono::duration<double>>(now - mainStreamLastInfoTime_).count();
+    if (interval > 0) {
+        auto duration = now - mainStreamBeginTime_;
+        auto hh = std::chrono::duration_cast<std::chrono::hours>(duration);
+        duration -= hh;
+        auto mm = std::chrono::duration_cast<std::chrono::minutes>(duration);
+        duration -= mm;
+        auto ss = std::chrono::duration_cast<std::chrono::seconds>(duration);
+        duration -= ss;
+
+        char strDuration[64] = { 0 };
+        snprintf(strDuration, sizeof(strDuration), "%02d:%02d:%02d", (int)hh.count(), (int)mm.count(), (int)ss.count());
+
+        char strFps[32] = { 0 };
+        snprintf(strFps, sizeof(strFps), "%d FPS", static_cast<int>(std::round((new_frames - mainStreamTotalFrames_) / interval)));
+
+        auto bps = (new_bytes - mainStreamTotalBytes_) * 8 / interval;
+        std::string strBps;
+        if (bps > 0) {
+            int unitMaxIndex = sizeof(units) / sizeof(*units);
+            int unitIndex = static_cast<int>(log10(bps) / 3);
+            if (unitIndex >= unitMaxIndex)
+                unitIndex = unitMaxIndex - 1;
+            strBps = std::to_string(bps / pow(1000, unitIndex)).substr(0, 4);
+            if (!strBps.empty() && strBps.back() == '.')
+                strBps.pop_back();
+            strBps += std::string(" ") + units[unitIndex];
+        } else {
+            strBps = "0 bps";
+        }
+
+        mainStreamMsg_->setText((std::string(strDuration) + "  " + strBps + "  " + strFps).c_str());
+    }
+
+    mainStreamTotalFrames_ = new_frames;
+    mainStreamTotalBytes_ = new_bytes;
+    mainStreamLastInfoTime_ = now;
+}
+
 void MultiOutputWidget::OnOBSEvent(obs_frontend_event event)
 {
     switch (event) {
     case OBS_FRONTEND_EVENT_STREAMING_STARTING:
+        UpdateMainStreamButton();
+        break;
     case OBS_FRONTEND_EVENT_STREAMING_STARTED:
+        mainStreamBeginTime_ = std::chrono::steady_clock::now();
+        mainStreamLastInfoTime_ = mainStreamBeginTime_;
+        mainStreamTotalFrames_ = 0;
+        mainStreamTotalBytes_ = 0;
+        if (mainStreamStatsTimer_) mainStreamStatsTimer_->start();
+        UpdateMainStreamButton();
+        break;
     case OBS_FRONTEND_EVENT_STREAMING_STOPPING:
+        UpdateMainStreamButton();
+        break;
     case OBS_FRONTEND_EVENT_STREAMING_STOPPED:
+        if (mainStreamStatsTimer_) mainStreamStatsTimer_->stop();
+        if (mainStreamMsg_) mainStreamMsg_->setText("");
         UpdateMainStreamButton();
         break;
     default:
