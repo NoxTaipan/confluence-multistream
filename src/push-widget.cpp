@@ -111,6 +111,7 @@ class PushWidgetImpl : public PushWidget, public IOBSOutputEventHanlder
     QPushButton* btn_ = 0;
     QLabel* badge_ = 0;
     QLabel* name_ = 0;
+    QLabel* statusDot_ = 0;
     QLabel* msg_ = 0;
 
     using clock = std::chrono::steady_clock;
@@ -581,8 +582,11 @@ public:
         badge_->setFixedSize(18, 18);
         badge_->setAlignment(Qt::AlignCenter);
         name_ = new QLabel(obs_module_text("NewStreaming"), headerRow);
+        statusDot_ = new QLabel(headerRow);
+        statusDot_->setFixedSize(9, 9);
         headerLayout->addWidget(badge_);
         headerLayout->addWidget(name_);
+        headerLayout->addWidget(statusDot_);
         headerLayout->addStretch();
         headerRow->setLayout(headerLayout);
         layout->addWidget(headerRow, 0, 0, 1, 3);
@@ -797,6 +801,16 @@ public:
     {
         name_->setText(QString::fromUtf8(config_->name));
         UpdateBadge();
+        SetStatusDot(IsRunning() ? "#45d9a0" : "#3a4050");
+    }
+
+    // Mismo verde que usa el boton "Start main stream" cuando esta activo,
+    // mas ambar para transicion y rojo (color de marca) para error - para
+    // que se vea de un vistazo cual target esta realmente en vivo.
+    void SetStatusDot(const char* color)
+    {
+        if (!statusDot_) return;
+        statusDot_->setStyleSheet(QString("background-color: %1; border-radius: 4px;").arg(color));
     }
 
     void ResetInfo()
@@ -869,6 +883,7 @@ public:
             btn_->setEnabled(true);
             SetMsg(obs_module_text("Status.Connecting"));
             remove_btn_->setEnabled(false);
+            SetStatusDot("#f2c14e");
         });
     }
 
@@ -882,6 +897,7 @@ public:
 
             ResetInfo();
             timer_->start();
+            SetStatusDot("#45d9a0");
         });
     }
 
@@ -894,6 +910,7 @@ public:
             btn_->setText(obs_module_text("Status.Stop"));
             btn_->setEnabled(true);
             SetMsg(obs_module_text("Status.Reconnecting"));
+            SetStatusDot("#f2c14e");
         });
     }
 
@@ -907,6 +924,7 @@ public:
 
             ResetInfo();
             timer_->start();
+            SetStatusDot("#45d9a0");
         });
     }
 
@@ -919,6 +937,7 @@ public:
             btn_->setText(obs_module_text("Status.Stop"));
             btn_->setEnabled(true);
             SetMsg(obs_module_text("Status.Stopping"));
+            SetStatusDot("#f2c14e");
         });
     }
 
@@ -937,21 +956,27 @@ public:
             {
                 case 0:
                     SetMsg(u8"");
+                    SetStatusDot("#3a4050");
                     break;
                 case -1:
                     SetMsg(obs_module_text("Error.WrongRTMPUrl"));
+                    SetStatusDot("#ff3b5c");
                     break;
                 case -2:
                     SetMsg(obs_module_text("Error.ServerConnect"));
+                    SetStatusDot("#ff3b5c");
                     break;
                 case -3:
                     SetMsg(obs_module_text("Error.ServerHandshake"));
+                    SetStatusDot("#ff3b5c");
                     break;
                 case -4:
                     SetMsg(obs_module_text("Error.ServerRefuse"));
+                    SetStatusDot("#ff3b5c");
                     break;
                 default:
                     SetMsg(obs_module_text("Error.Unknown"));
+                    SetStatusDot("#ff3b5c");
                     break;
             }
         });
