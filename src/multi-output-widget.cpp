@@ -13,6 +13,21 @@
 #include <QTabWidget>
 #include <QMainWindow>
 #include <QFontDatabase>
+#include <QProcess>
+#include <fstream>
+
+#ifdef _WIN32
+#include <Windows.h>
+#endif
+
+// Ruta personal de este equipo - el repo confluence vive aparte de este
+// plugin. La build para compartir con otros va a necesitar que esto sea
+// configurable en vez de hardcodeado (ver decision de mantener la version
+// personal y la de compartir separadas).
+static const char* ConfluenceDir()
+{
+    return "C:/Users/noxta/Documents/Claude/confluence";
+}
 
 static QString LoadBrandFontFamily()
 {
@@ -91,6 +106,35 @@ MultiOutputWidget::MultiOutputWidget(QWidget* parent)
     auto suiteTag = new QLabel(u8"CONFLUENCE SUITE", container_);
     suiteTag->setStyleSheet("color: #9096ac; font-size: 9px; font-weight: 600; margin-left: 24px; margin-bottom: 8px;");
     layout_->addWidget(suiteTag);
+
+    // Estado del servidor Confluence (Stream Info/Chat/Overlay) - corre
+    // aparte de este plugin, asi que antes la unica forma de notar que se
+    // habia caido era abrir el dock del navegador y ver que no cargaba.
+    auto confluenceRow = new QWidget(container_);
+    auto confluenceLayout = new QHBoxLayout(confluenceRow);
+    confluenceLayout->setContentsMargins(0, 0, 0, 8);
+    confluenceLayout->setSpacing(6);
+    confluenceDot_ = new QLabel(confluenceRow);
+    confluenceDot_->setFixedSize(8, 8);
+    confluenceStatusLabel_ = new QLabel(obs_module_text("Confluence.Checking"), confluenceRow);
+    confluenceStatusLabel_->setStyleSheet("font-size: 11px;");
+    confluenceRestartBtn_ = new QPushButton(obs_module_text("Btn.RestartConfluence"), confluenceRow);
+    confluenceRestartBtn_->setStyleSheet("padding: 3px 9px; font-size: 11px; font-weight: 600;");
+    QObject::connect(confluenceRestartBtn_, &QPushButton::clicked, [this]() {
+        RestartConfluenceServer();
+    });
+    confluenceLayout->addWidget(confluenceDot_);
+    confluenceLayout->addWidget(confluenceStatusLabel_);
+    confluenceLayout->addStretch();
+    confluenceLayout->addWidget(confluenceRestartBtn_);
+    confluenceRow->setLayout(confluenceLayout);
+    layout_->addWidget(confluenceRow);
+
+    confluenceCheckTimer_ = new QTimer(this);
+    confluenceCheckTimer_->setInterval(5000);
+    QObject::connect(confluenceCheckTimer_, &QTimer::timeout, this, &MultiOutputWidget::CheckConfluenceStatus);
+    confluenceCheckTimer_->start();
+    CheckConfluenceStatus();
 
     // main OBS output (e.g. Twitch) start/stop - native obs-frontend-api, not a multi-rtmp target
     mainStreamButton_ = new QPushButton(container_);
@@ -606,6 +650,61 @@ bool MultiOutputWidget::UpdateSyncStop(const QString& targetId, bool syncStop)
     
     blog(LOG_WARNING, TAG "UpdateSyncStop failed: Target not found %s", targetId.toUtf8().constData());
     return false;
+}
+
+// Vivo/muerto se decide leyendo el PID que el propio server.js escribe en
+// scripts/confluence.pid y chequeando si ese proceso sigue corriendo -
+// mismo archivo que ya usa scripts/stop.ps1, sin agregar una dependencia
+// de red (Qt Network) solo para esto.
+static bool IsConfluenceProcessAlive()
+{
+#ifdef _WIN32
+    std::ifstream f(std::string(ConfluenceDir()) + "/scripts/confluence.pid");
+    if (!f) return false;
+
+    DWORD pid = 0;
+    f >> pid;
+    if (pid == 0) return false;
+
+    HANDLE h = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+    if (!h) return false;
+
+    DWORD exitCode = 0;
+    bool alive = GetExitCodeProcess(h, &exitCode) && exitCode == STILL_ACTIVE;
+    CloseHandle(h);
+    return alive;
+#else
+    return false;
+#endif
+}
+
+void MultiOutputWidget::CheckConfluenceStatus()
+{
+    if (!confluenceDot_) return;
+
+    bool alive = IsConfluenceProcessAlive();
+    confluenceDot_->setStyleSheet(QString("background-color: %1; border-radius: 4px;")
+        .arg(alive ? "#45d9a0" : "#3a4050"));
+    confluenceStatusLabel_->setText(obs_module_text(alive ? "Confluence.Online" : "Confluence.Offline"));
+}
+
+void MultiOutputWidget::RestartConfluenceServer()
+{
+    confluenceRestartBtn_->setEnabled(false);
+    confluenceStatusLabel_->setText(obs_module_text("Confluence.Restarting"));
+
+    QString dir = QString::fromUtf8(ConfluenceDir());
+    // mismos dos scripts que usa obs-autostart.lua al abrir/cerrar OBS -
+    // stop.ps1 mata el PID guardado si sigue vivo, start-hidden.vbs lanza
+    // uno nuevo oculto. node server.js ya sale solo sin romper nada si el
+    // puerto termina ocupado por otra instancia (ver server.js).
+    QProcess::execute("powershell", { "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", dir + "/scripts/stop.ps1" });
+    QProcess::startDetached("wscript.exe", { dir + "/scripts/start-hidden.vbs" });
+
+    QTimer::singleShot(2000, this, [this]() {
+        CheckConfluenceStatus();
+        confluenceRestartBtn_->setEnabled(true);
+    });
 }
 
 void MultiOutputWidget::UpdateMainStreamButton()

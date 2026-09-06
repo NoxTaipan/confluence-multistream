@@ -30,10 +30,21 @@ public slots:  // ✅ CHANGED: Declare RefreshUI as a slot
 
 private:
     void UpdateMainStreamButton();
+    void CheckConfluenceStatus();
+    void RestartConfluenceServer();
 
     QWidget* container_ = 0;
     QScrollArea scroll_;
     QVBoxLayout* itemLayout_ = 0;
     QVBoxLayout* layout_ = 0;
     QPushButton* mainStreamButton_ = 0;
+
+    // Confluence (Stream Info / Chat / Overlay) corre como un servidor Node
+    // aparte de este plugin - este bloque solo lo monitorea/reinicia desde
+    // el dock nativo para no depender de abrir el dock del navegador para
+    // notar si se cayo.
+    QLabel* confluenceDot_ = 0;
+    QLabel* confluenceStatusLabel_ = 0;
+    QPushButton* confluenceRestartBtn_ = 0;
+    QTimer* confluenceCheckTimer_ = 0;
 };
