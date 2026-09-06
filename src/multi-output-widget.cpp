@@ -8,6 +8,7 @@
 #include <QGridLayout>
 #include <QPushButton>
 #include <QLabel>
+#include <QPixmap>
 #include <QMessageBox>
 #include <QDialog>
 #include <QTabWidget>
@@ -136,8 +137,39 @@ MultiOutputWidget::MultiOutputWidget(QWidget* parent)
     confluenceCheckTimer_->start();
     CheckConfluenceStatus();
 
-    // main OBS output (e.g. Twitch) start/stop - native obs-frontend-api, not a multi-rtmp target
-    mainStreamButton_ = new QPushButton(container_);
+    // main OBS output (Twitch) start/stop - native obs-frontend-api, not a multi-rtmp
+    // target. Fila armada igual que las de PushWidgetImpl (badge + nombre + punto de
+    // estado, boton debajo) para que se lea como una fila mas de la lista, en vez de
+    // un boton ancho suelto - se agrega mas abajo, justo arriba de la lista de targets.
+    auto mainStreamRow = new QWidget(container_);
+    auto mainStreamRowLayout = new QVBoxLayout(mainStreamRow);
+    mainStreamRowLayout->setContentsMargins(0, 0, 0, 0);
+    mainStreamRowLayout->setSpacing(6);
+
+    auto mainStreamHeader = new QWidget(mainStreamRow);
+    auto mainStreamHeaderLayout = new QHBoxLayout(mainStreamHeader);
+    mainStreamHeaderLayout->setContentsMargins(0, 0, 0, 0);
+    mainStreamHeaderLayout->setSpacing(6);
+    mainStreamBadge_ = new QLabel(mainStreamHeader);
+    mainStreamBadge_->setFixedSize(18, 18);
+    mainStreamBadge_->setAlignment(Qt::AlignCenter);
+    char* twitchIconPath = obs_module_file("icons/twitch.png");
+    if (twitchIconPath) {
+        QPixmap pix(QString::fromUtf8(twitchIconPath));
+        mainStreamBadge_->setPixmap(pix.scaled(18, 18, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        bfree(twitchIconPath);
+    }
+    auto mainStreamName = new QLabel(u8"Twitch", mainStreamHeader);
+    mainStreamDot_ = new QLabel(mainStreamHeader);
+    mainStreamDot_->setFixedSize(9, 9);
+    mainStreamHeaderLayout->addWidget(mainStreamBadge_);
+    mainStreamHeaderLayout->addWidget(mainStreamName);
+    mainStreamHeaderLayout->addWidget(mainStreamDot_);
+    mainStreamHeaderLayout->addStretch();
+    mainStreamHeader->setLayout(mainStreamHeaderLayout);
+    mainStreamRowLayout->addWidget(mainStreamHeader);
+
+    mainStreamButton_ = new QPushButton(mainStreamRow);
     mainStreamButton_->setObjectName("mainStreamButton");
     QObject::connect(mainStreamButton_, &QPushButton::clicked, [this]() {
         if (obs_frontend_streaming_active())
@@ -145,7 +177,8 @@ MultiOutputWidget::MultiOutputWidget(QWidget* parent)
         else
             obs_frontend_streaming_start();
     });
-    layout_->addWidget(mainStreamButton_);
+    mainStreamRowLayout->addWidget(mainStreamButton_);
+    mainStreamRow->setLayout(mainStreamRowLayout);
     UpdateMainStreamButton();
 
     // init widget
@@ -211,6 +244,10 @@ MultiOutputWidget::MultiOutputWidget(QWidget* parent)
         }
     });
     
+    // Fila de Twitch (armada arriba) va justo encima de la lista de targets,
+    // como si fuera una fila mas de la lista.
+    layout_->addWidget(mainStreamRow);
+
     // load config
     itemLayout_ = new QVBoxLayout(container_);
     LoadConfig();
@@ -718,6 +755,13 @@ void MultiOutputWidget::UpdateMainStreamButton()
     mainStreamButton_->setStyleSheet(active
         ? "background-color: #1c3b30; color: #6ee7b7; border-color: #45d9a0; font-weight: 700;"
         : "");
+
+    // Mismo verde/gris que SetStatusDot usa en las filas de target
+    // (push-widget.cpp) para que se lea igual de un vistazo.
+    if (mainStreamDot_) {
+        mainStreamDot_->setStyleSheet(QString("background-color: %1; border-radius: 4px;")
+            .arg(active ? "#45d9a0" : "#3a4050"));
+    }
 }
 
 void MultiOutputWidget::OnOBSEvent(obs_frontend_event event)

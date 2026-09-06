@@ -38,6 +38,11 @@ private:
     QVBoxLayout* itemLayout_ = 0;
     QVBoxLayout* layout_ = 0;
     QPushButton* mainStreamButton_ = 0;
+    // Fila del stream principal (Twitch), con el mismo formato icono+nombre+punto
+    // de estado que usan las filas de target en PushWidgetImpl - ver UpdateBadge()
+    // en push-widget.cpp para el mismo patron de carga de icono.
+    QLabel* mainStreamBadge_ = 0;
+    QLabel* mainStreamDot_ = 0;
 
     // Confluence (Stream Info / Chat / Overlay) corre como un servidor Node
     // aparte de este plugin - este bloque solo lo monitorea/reinicia desde
