@@ -406,13 +406,27 @@ class PushWidgetImpl : public PushWidget, public IOBSOutputEventHanlder
         }
 
         if (!aenc || !venc) {
-            // If we don't have a valid encoder, we're likely using a special encoder type that
-            // needs to be started by the user (i.e. start streaming or start recording)
+            // Sin encoder propio (config_->videoConfig/audioConfig vacio o
+            // en placeholder), este target reusa el del stream principal o
+            // el de grabacion de OBS - que todavia no existe si esa salida
+            // no esta activa. Se identifica cual de las dos hace falta para
+            // decirlo por nombre en vez de un mensaje generico.
             ReleaseOutputEncoder();
 
-            auto msgbox = new QMessageBox(QMessageBox::Icon::Critical, 
-                obs_module_text("Notice.Title"), 
-                obs_module_text("Notice.GetEncoder"),
+            auto videoConfigId = config_->videoConfig.value_or(OBS_STREAMING_ENC_PLACEHOLDER);
+            auto audioConfigId = config_->audioConfig.value_or(OBS_STREAMING_ENC_PLACEHOLDER);
+            bool needsRecording =
+                (!venc && videoConfigId == OBS_RECORDING_ENC_PLACEHOLDER) ||
+                (!aenc && audioConfigId == OBS_RECORDING_ENC_PLACEHOLDER);
+
+            QString reason = obs_module_text(needsRecording ? "Notice.NeedsRecording" : "Notice.NeedsMainStream");
+            QString message = QString::fromUtf8(obs_module_text("Notice.GetEncoderFmt"))
+                .arg(QString::fromUtf8(config_->name))
+                .arg(reason);
+
+            auto msgbox = new QMessageBox(QMessageBox::Icon::Critical,
+                obs_module_text("Notice.Title"),
+                message,
                 QMessageBox::StandardButton::Ok,
                 this
                 );
