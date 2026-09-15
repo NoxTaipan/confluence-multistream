@@ -30,7 +30,7 @@
 // personal y la de compartir separadas).
 static const char* ConfluenceDir()
 {
-    return "C:/Users/noxta/Documents/Claude/confluence";
+    return "C:/Users/noxta/Documents/Projects/confluence";
 }
 
 static QString LoadBrandFontFamily()
