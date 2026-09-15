@@ -33,6 +33,7 @@ private:
     void UpdateMainStreamStats();
     void CheckConfluenceStatus();
     void RestartConfluenceServer();
+    void RepairConfluenceServer();
 
     QWidget* container_ = 0;
     QScrollArea scroll_;
@@ -61,5 +62,6 @@ private:
     QLabel* confluenceDot_ = 0;
     QLabel* confluenceStatusLabel_ = 0;
     QPushButton* confluenceRestartBtn_ = 0;
+    QPushButton* confluenceRepairBtn_ = 0;
     QTimer* confluenceCheckTimer_ = 0;
 };

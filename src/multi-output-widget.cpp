@@ -127,9 +127,15 @@ MultiOutputWidget::MultiOutputWidget(QWidget* parent)
     QObject::connect(confluenceRestartBtn_, &QPushButton::clicked, [this]() {
         RestartConfluenceServer();
     });
+    confluenceRepairBtn_ = new QPushButton(obs_module_text("Btn.RepairConfluence"), confluenceRow);
+    confluenceRepairBtn_->setStyleSheet("padding: 3px 9px; font-size: 11px; font-weight: 600;");
+    QObject::connect(confluenceRepairBtn_, &QPushButton::clicked, [this]() {
+        RepairConfluenceServer();
+    });
     confluenceLayout->addWidget(confluenceDot_);
     confluenceLayout->addWidget(confluenceStatusLabel_);
     confluenceLayout->addStretch();
+    confluenceLayout->addWidget(confluenceRepairBtn_);
     confluenceLayout->addWidget(confluenceRestartBtn_);
     confluenceRow->setLayout(confluenceLayout);
     layout_->addWidget(confluenceRow);
@@ -758,6 +764,45 @@ void MultiOutputWidget::RestartConfluenceServer()
         CheckConfluenceStatus();
         confluenceRestartBtn_->setEnabled(true);
     });
+}
+
+// "Reparar" existe para el caso visto en vivo (2026-09-15): node_modules/
+// termino corrupto (faltaba express/lib/router entero) y el server tiraba
+// MODULE_NOT_FOUND al arrancar - Reiniciar solo no alcanza ahi porque
+// vuelve a lanzar el mismo node_modules roto. Corre `npm install` (async,
+// QProcess normal en vez de ::execute, para no congelar la UI de OBS los
+// varios segundos que tarda) y recien despues reinicia el server, pase lo
+// que pase con el install - si igual queda mal, CheckConfluenceStatus lo
+// va a mostrar offline y hay que mirar el log a mano.
+void MultiOutputWidget::RepairConfluenceServer()
+{
+    confluenceRepairBtn_->setEnabled(false);
+    confluenceRestartBtn_->setEnabled(false);
+    confluenceStatusLabel_->setText(obs_module_text("Confluence.Repairing"));
+
+    QString dir = QString::fromUtf8(ConfluenceDir());
+
+    auto npm = new QProcess(this);
+    npm->setWorkingDirectory(dir);
+    npm->setProgram("cmd.exe");
+    npm->setArguments({ "/c", "npm", "install" });
+    QObject::connect(npm, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+        this, [this, dir, npm](int exitCode, QProcess::ExitStatus /*status*/) {
+            if (exitCode != 0) {
+                blog(LOG_WARNING, TAG "Confluence repair: npm install exited with code %d", exitCode);
+            }
+            npm->deleteLater();
+
+            QProcess::execute("powershell", { "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", dir + "/scripts/stop.ps1" });
+            QProcess::startDetached("wscript.exe", { dir + "/scripts/start-hidden.vbs" });
+
+            QTimer::singleShot(2000, this, [this]() {
+                CheckConfluenceStatus();
+                confluenceRepairBtn_->setEnabled(true);
+                confluenceRestartBtn_->setEnabled(true);
+            });
+        });
+    npm->start();
 }
 
 void MultiOutputWidget::UpdateMainStreamButton()

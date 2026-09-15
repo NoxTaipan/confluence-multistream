@@ -28,7 +28,7 @@ if (Get-Process obs64 -ErrorAction SilentlyContinue) {
     exit 1
 }
 
-$src = Join-Path $PSScriptRoot "build_x64\rundir\RelWithDebInfo"
+$src = Join-Path $PSScriptRoot "build_x64\rundir\Release"
 if (-not (Test-Path (Join-Path $src "obs-multi-rtmp.dll"))) {
     Write-Host "No se encontro el build compilado en '$src'. Compila el plugin primero (ver README)." -ForegroundColor Red
     Read-Host "Presiona Enter para salir"
