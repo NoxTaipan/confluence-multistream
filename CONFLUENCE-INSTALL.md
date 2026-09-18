@@ -1,3 +1,5 @@
+[🇬🇧 English](CONFLUENCE-INSTALL.en.md) | 🇪🇸 **Español**
+
 # Reinstalar "Confluence Multistream" (despues de reinstalar OBS)
 
 Este es el fork de obs-multi-rtmp (con soporte de websocket) compilado para NOX TAIPAN, ya con el tema oscuro/verde y la fuente IBM Plex Sans de Confluence.
