@@ -48,3 +48,11 @@ Este plugin es una pieza de **Confluence Suite** — cada una se instala por sep
 | [confluence-beta](https://github.com/NoxTaipan/confluence-beta) | El panel web (OBS dock): titulo/tags/categoria + chat unificado de Twitch/YouTube/Kick. |
 | **confluence-multistream** (este repo) | Plugin nativo de OBS para mandar el video a varios destinos RTMP a la vez. |
 | [confluence-streamdeck-beta](https://github.com/NoxTaipan/confluence-streamdeck-beta) | Plugin de Elgato Stream Deck para controlar todo lo anterior desde botones fisicos. Opcional. |
+
+## Soporte
+
+Todo lo que publico en GitHub — incluido este repo — es gratis y de codigo abierto, siempre. Si te sirve y queres apoyar el mantenimiento, invitame un cafe:
+
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/noxtaipan)
+
+Aparte, en [Gumroad](https://noxtaipan.gumroad.com/) vendo otros productos — eso si tiene costo, para que quede claro.
