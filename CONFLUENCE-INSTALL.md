@@ -36,3 +36,13 @@ cmake --build . --config Release
 ```
 
 Esto deja el `.dll` en `build_x64/rundir/Release/` (o `build_x64/Release/`, segun la version de CMake) para que `install.ps1` lo copie a OBS.
+
+## Suite completa
+
+Este plugin es una pieza de **Confluence Suite** — cada una se instala por separado, usa lo que necesites:
+
+| Repo | Que es |
+|---|---|
+| [confluence-beta](https://github.com/NoxTaipan/confluence-beta) | El panel web (OBS dock): titulo/tags/categoria + chat unificado de Twitch/YouTube/Kick. |
+| **confluence-multistream** (este repo) | Plugin nativo de OBS para mandar el video a varios destinos RTMP a la vez. |
+| [confluence-streamdeck-beta](https://github.com/NoxTaipan/confluence-streamdeck-beta) | Plugin de Elgato Stream Deck para controlar todo lo anterior desde botones fisicos. Opcional. |
