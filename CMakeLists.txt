@@ -80,6 +80,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
   ./src/ws_vendor.cpp
   ./src/multi-output-widget.h
   ./src/multi-output-widget.cpp
+  ./src/i18n.h
+  ./src/i18n.cpp
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE

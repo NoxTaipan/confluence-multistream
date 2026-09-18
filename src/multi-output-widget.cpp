@@ -2,6 +2,7 @@
 #include "push-widget.h"
 #include "output-config.h"
 #include "plugin-support.h"
+#include "i18n.h"
 #include <QScrollArea>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -55,7 +56,7 @@ static QString LoadBrandFontFamily()
 MultiOutputWidget::MultiOutputWidget(QWidget* parent)
     : QWidget(parent)
 {
-    setWindowTitle(obs_module_text("Title"));
+    setWindowTitle(Tr("Title"));
 
     QString brandFont = LoadBrandFontFamily();
     QString fontStack = brandFont.isEmpty()
@@ -99,11 +100,34 @@ MultiOutputWidget::MultiOutputWidget(QWidget* parent)
         "  stop:0 #6ee7b7, stop:0.6 #9146ff, stop:1 #ff3b5c);"
         "border-radius: 5px;"
     );
-    auto titleLabel = new QLabel(obs_module_text("Title"), headerRow);
+    auto titleLabel = new QLabel(Tr("Title"), headerRow);
     titleLabel->setStyleSheet(QStringLiteral("color: #e6e8ee; font-weight: 700; font-size: 15px; font-family: %1;").arg(fontStack));
     headerLayout->addWidget(brandMark);
     headerLayout->addWidget(titleLabel);
     headerLayout->addStretch();
+
+    // Banderita ES/EN: fuerza el idioma de este dock especifico via Tr(),
+    // independiente del idioma global de OBS (que solo se puede cambiar en
+    // Settings -> General, y aplica a todos los plugins a la vez).
+    const QString langBtnStyleBase = QStringLiteral(
+        "padding: 2px 4px; font-size: 13px; border-radius: 6px;");
+    langEsBtn_ = new QPushButton(u8"\U0001F1EA\U0001F1F8", headerRow);
+    langEsBtn_->setToolTip(u8"Español");
+    langEsBtn_->setStyleSheet(langBtnStyleBase);
+    langEnBtn_ = new QPushButton(u8"\U0001F1EC\U0001F1E7", headerRow);
+    langEnBtn_->setToolTip(u8"English");
+    langEnBtn_->setStyleSheet(langBtnStyleBase);
+    QObject::connect(langEsBtn_, &QPushButton::clicked, [this]() {
+        SetConfluenceLanguageSpanish(true);
+        RetranslateUi();
+    });
+    QObject::connect(langEnBtn_, &QPushButton::clicked, [this]() {
+        SetConfluenceLanguageSpanish(false);
+        RetranslateUi();
+    });
+    headerLayout->addWidget(langEsBtn_);
+    headerLayout->addWidget(langEnBtn_);
+
     headerRow->setLayout(headerLayout);
     layout_->addWidget(headerRow);
 
@@ -120,14 +144,14 @@ MultiOutputWidget::MultiOutputWidget(QWidget* parent)
     confluenceLayout->setSpacing(6);
     confluenceDot_ = new QLabel(confluenceRow);
     confluenceDot_->setFixedSize(8, 8);
-    confluenceStatusLabel_ = new QLabel(obs_module_text("Confluence.Checking"), confluenceRow);
+    confluenceStatusLabel_ = new QLabel(Tr("Confluence.Checking"), confluenceRow);
     confluenceStatusLabel_->setStyleSheet("font-size: 11px;");
-    confluenceRestartBtn_ = new QPushButton(obs_module_text("Btn.RestartConfluence"), confluenceRow);
+    confluenceRestartBtn_ = new QPushButton(Tr("Btn.RestartConfluence"), confluenceRow);
     confluenceRestartBtn_->setStyleSheet("padding: 3px 9px; font-size: 11px; font-weight: 600;");
     QObject::connect(confluenceRestartBtn_, &QPushButton::clicked, [this]() {
         RestartConfluenceServer();
     });
-    confluenceRepairBtn_ = new QPushButton(obs_module_text("Btn.RepairConfluence"), confluenceRow);
+    confluenceRepairBtn_ = new QPushButton(Tr("Btn.RepairConfluence"), confluenceRow);
     confluenceRepairBtn_->setStyleSheet("padding: 3px 9px; font-size: 11px; font-weight: 600;");
     QObject::connect(confluenceRepairBtn_, &QPushButton::clicked, [this]() {
         RepairConfluenceServer();
@@ -204,8 +228,8 @@ MultiOutputWidget::MultiOutputWidget(QWidget* parent)
     QObject::connect(mainStreamStatsTimer_, &QTimer::timeout, this, &MultiOutputWidget::UpdateMainStreamStats);
 
     // init widget
-    auto addButton = new QPushButton(obs_module_text("Btn.NewTarget"), container_);
-    QObject::connect(addButton, &QPushButton::clicked, [this]() {
+    addTargetBtn_ = new QPushButton(Tr("Btn.NewTarget"), container_);
+    QObject::connect(addTargetBtn_, &QPushButton::clicked, [this]() {
         auto& global = GlobalMultiOutputConfig();
         auto newid = GenerateId(global);
         auto target = std::make_shared<OutputTargetConfig>();
@@ -224,22 +248,22 @@ MultiOutputWidget::MultiOutputWidget(QWidget* parent)
             delete pushwidget;
         }
     });
-    layout_->addWidget(addButton);
+    layout_->addWidget(addTargetBtn_);
 
     // start all, stop all
     auto allBtnContainer = new QWidget(this);
     auto allBtnLayout = new QHBoxLayout();
-    auto startAllButton = new QPushButton(obs_module_text("Btn.StartAll"), allBtnContainer);
-    allBtnLayout->addWidget(startAllButton);
-    auto stopAllButton = new QPushButton(obs_module_text("Btn.StopAll"), allBtnContainer);
-    allBtnLayout->addWidget(stopAllButton);
+    startAllBtn_ = new QPushButton(Tr("Btn.StartAll"), allBtnContainer);
+    allBtnLayout->addWidget(startAllBtn_);
+    stopAllBtn_ = new QPushButton(Tr("Btn.StopAll"), allBtnContainer);
+    allBtnLayout->addWidget(stopAllBtn_);
     allBtnContainer->setLayout(allBtnLayout);
     layout_->addWidget(allBtnContainer);
 
     // Start/stop en orden (Twitch primero, despues cada target en el orden
     // de la lista) con un pequeno delay entre cada uno - no espera a que el
     // anterior confirme conexion, solo evita disparar todo en el mismo instante.
-    QObject::connect(startAllButton, &QPushButton::clicked, [this]() {
+    QObject::connect(startAllBtn_, &QPushButton::clicked, [this]() {
         const int stepMs = 800;
         int delayMs = 0;
         QTimer::singleShot(delayMs, this, []() {
@@ -252,7 +276,7 @@ MultiOutputWidget::MultiOutputWidget(QWidget* parent)
             delayMs += stepMs;
         }
     });
-    QObject::connect(stopAllButton, &QPushButton::clicked, [this]() {
+    QObject::connect(stopAllBtn_, &QPushButton::clicked, [this]() {
         const int stepMs = 800;
         int delayMs = 0;
         QTimer::singleShot(delayMs, this, []() {
@@ -276,7 +300,7 @@ MultiOutputWidget::MultiOutputWidget(QWidget* parent)
     layout_->addLayout(itemLayout_);
 
     // donate section (unchanged)
-    if (std::string("\xe5\xa4\x9a\xe8\xb7\xaf\xe6\x8e\xa8\xe6\xb5\x81") == obs_module_text("Title"))
+    if (std::string("\xe5\xa4\x9a\xe8\xb7\xaf\xe6\x8e\xa8\xe6\xb5\x81") == Tr("Title"))
     {
         auto cr = new QWidget(container_);
         auto innerLayout = new QGridLayout(cr);
@@ -737,6 +761,26 @@ static bool IsConfluenceProcessAlive()
 #endif
 }
 
+void MultiOutputWidget::RetranslateUi()
+{
+    // CheckConfluenceStatus y UpdateMainStreamButton ya recalculan su texto
+    // a partir del estado en vivo cada vez que se llaman - no hace falta
+    // guardar aparte "cual era el ultimo estado" para retraducir estos dos.
+    CheckConfluenceStatus();
+    UpdateMainStreamButton();
+
+    if (addTargetBtn_) addTargetBtn_->setText(Tr("Btn.NewTarget"));
+    if (startAllBtn_) startAllBtn_->setText(Tr("Btn.StartAll"));
+    if (stopAllBtn_) stopAllBtn_->setText(Tr("Btn.StopAll"));
+    if (confluenceRestartBtn_) confluenceRestartBtn_->setText(Tr("Btn.RestartConfluence"));
+    if (confluenceRepairBtn_) confluenceRepairBtn_->setText(Tr("Btn.RepairConfluence"));
+
+    // Reconstruye las filas de target desde cero - cada PushWidgetImpl nuevo
+    // lee Tr() al crearse, asi que esto las deja en el idioma recien elegido
+    // sin tener que exponer un metodo de retraduccion propio en push-widget.cpp.
+    RefreshUI();
+}
+
 void MultiOutputWidget::CheckConfluenceStatus()
 {
     if (!confluenceDot_) return;
@@ -744,13 +788,13 @@ void MultiOutputWidget::CheckConfluenceStatus()
     bool alive = IsConfluenceProcessAlive();
     confluenceDot_->setStyleSheet(QString("background-color: %1; border-radius: 4px;")
         .arg(alive ? "#45d9a0" : "#3a4050"));
-    confluenceStatusLabel_->setText(obs_module_text(alive ? "Confluence.Online" : "Confluence.Offline"));
+    confluenceStatusLabel_->setText(Tr(alive ? "Confluence.Online" : "Confluence.Offline"));
 }
 
 void MultiOutputWidget::RestartConfluenceServer()
 {
     confluenceRestartBtn_->setEnabled(false);
-    confluenceStatusLabel_->setText(obs_module_text("Confluence.Restarting"));
+    confluenceStatusLabel_->setText(Tr("Confluence.Restarting"));
 
     QString dir = QString::fromUtf8(ConfluenceDir());
     // mismos dos scripts que usa obs-autostart.lua al abrir/cerrar OBS -
@@ -778,7 +822,7 @@ void MultiOutputWidget::RepairConfluenceServer()
 {
     confluenceRepairBtn_->setEnabled(false);
     confluenceRestartBtn_->setEnabled(false);
-    confluenceStatusLabel_->setText(obs_module_text("Confluence.Repairing"));
+    confluenceStatusLabel_->setText(Tr("Confluence.Repairing"));
 
     QString dir = QString::fromUtf8(ConfluenceDir());
 
@@ -811,8 +855,8 @@ void MultiOutputWidget::UpdateMainStreamButton()
 
     bool active = obs_frontend_streaming_active();
     mainStreamButton_->setText(active
-        ? obs_module_text("Btn.StopMainStream")
-        : obs_module_text("Btn.StartMainStream"));
+        ? Tr("Btn.StopMainStream")
+        : Tr("Btn.StartMainStream"));
     mainStreamButton_->setStyleSheet(active
         ? "background-color: #1c3b30; color: #6ee7b7; border-color: #45d9a0; font-weight: 700;"
         : "");

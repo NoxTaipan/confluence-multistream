@@ -34,12 +34,23 @@ private:
     void CheckConfluenceStatus();
     void RestartConfluenceServer();
     void RepairConfluenceServer();
+    // Reaplica Tr() a todo lo que este dock tiene visible ahora mismo -
+    // conectada a los botones de banderita. Los textos que ya se recalculan
+    // solos a partir de estado en vivo (CheckConfluenceStatus,
+    // UpdateMainStreamButton) simplemente se vuelven a llamar en vez de
+    // guardar una copia separada del estado actual.
+    void RetranslateUi();
 
     QWidget* container_ = 0;
     QScrollArea scroll_;
     QVBoxLayout* itemLayout_ = 0;
     QVBoxLayout* layout_ = 0;
     QPushButton* mainStreamButton_ = 0;
+    QPushButton* addTargetBtn_ = 0;
+    QPushButton* startAllBtn_ = 0;
+    QPushButton* stopAllBtn_ = 0;
+    QPushButton* langEsBtn_ = 0;
+    QPushButton* langEnBtn_ = 0;
     // Fila del stream principal (Twitch), con el mismo formato icono+nombre+punto
     // de estado que usan las filas de target en PushWidgetImpl - ver UpdateBadge()
     // en push-widget.cpp para el mismo patron de carga de icono.

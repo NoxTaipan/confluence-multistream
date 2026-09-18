@@ -1,4 +1,5 @@
 #include "edit-widget.h"
+#include "i18n.h"
 #include "output-config.h"
 #include "json-util.hpp"
 #include "obs.hpp"
@@ -56,7 +57,7 @@ static obs_properties* AddBF(obs_properties* p) {
     if (!bfp) {
         bfp = obs_properties_get(p, "bframes");
         if (!bfp)
-            obs_properties_add_int(p, "bf", obs_module_text("BFrames"), 0, 16, 1);
+            obs_properties_add_int(p, "bf", Tr("BFrames"), 0, 16, 1);
     }
     return p;
 }
@@ -195,7 +196,7 @@ class EditOutputWidgetImpl: public EditOutputWidget
         auto& global = GlobalMultiOutputConfig();
 
         {
-            auto action = menu->addAction(obs_module_text("NoShare"));
+            auto action = menu->addAction(Tr("NoShare"));
             QObject::connect(action, &QAction::triggered, [=]() {
                 auto& global = GlobalMultiOutputConfig();
                 if (isAudio) {
@@ -268,14 +269,14 @@ class EditOutputWidgetImpl: public EditOutputWidget
         {
             serviceSettings_ = new PropertiesWidget(tab);
             updateServiceTab();
-            tab->addTab(serviceSettings_, obs_module_text("Tab.Service"));
+            tab->addTab(serviceSettings_, Tr("Tab.Service"));
         }
 
         // output
         {
             outputSettings_ = new PropertiesWidget(tab);
             updateOutputTab();
-            tab->addTab(outputSettings_, obs_module_text("Tab.Output"));
+            tab->addTab(outputSettings_, Tr("Tab.Output"));
         }
 
         QObject::connect(tab, &QTabWidget::currentChanged, [tab](int index) {
@@ -348,7 +349,7 @@ public:
         }
         config_ = std::make_shared<OutputTargetConfig>(*config_);
 
-        setWindowTitle(obs_module_text("StreamingSettings"));
+        setWindowTitle(Tr("StreamingSettings"));
 
         scroll_ = new QScrollArea(this);
         scroll_->setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAsNeeded);
@@ -366,9 +367,9 @@ public:
             auto sublayout = new QGridLayout(container_);
             sublayout->setColumnStretch(0, 0);
             sublayout->setColumnStretch(1, 1);
-            sublayout->addWidget(new QLabel(obs_module_text("StreamingName"), container_), 0, 0);
+            sublayout->addWidget(new QLabel(Tr("StreamingName"), container_), 0, 0);
             sublayout->addWidget(name_ = new QLineEdit("", container_), 0, 1);
-            sublayout->addWidget(new QLabel(obs_module_text("Protocol"), container_), 1, 0);
+            sublayout->addWidget(new QLabel(Tr("Protocol"), container_), 1, 0);
             sublayout->addWidget(protocolSelector_ = new QComboBox(container_), 1, 1);
             layout->addLayout(sublayout);
         }
@@ -385,7 +386,7 @@ public:
             sub_grid->setColumnStretch(1, 0);
             {
                 {
-                    auto gp = new QGroupBox(obs_module_text("VideoSettings"), container_);
+                    auto gp = new QGroupBox(Tr("VideoSettings"), container_);
                     sub_grid->addWidget(gp, 0, 0, 2, 1);
                     auto encLayout = new QGridLayout();
                     int currow = 0;
@@ -393,7 +394,7 @@ public:
                         int curcol = 0;
                         auto sublayout = new QHBoxLayout();
                         sublayout->addWidget(v_share_notify_ = new QLabel(gp), 1);
-                        auto shareButton = new QPushButton(obs_module_text("Btn.EncoderShare"), gp);
+                        auto shareButton = new QPushButton(Tr("Btn.EncoderShare"), gp);
                         sublayout->addWidget(shareButton);
                         encLayout->addLayout(sublayout, currow, curcol++, 1, 2);
 
@@ -407,26 +408,26 @@ public:
                     ++currow;
                     {
                         int curcol = 0;
-                        encLayout->addWidget(new QLabel(obs_module_text("Encoder"), gp), currow, curcol++);
+                        encLayout->addWidget(new QLabel(Tr("Encoder"), gp), currow, curcol++);
                         encLayout->addWidget(venc_ = new QComboBox(gp), currow, curcol++);
                     }
                     ++currow;
                     {
                         int curcol = 0;
-                        encLayout->addWidget(new QLabel(obs_module_text("Scene"), gp), currow, curcol++);
+                        encLayout->addWidget(new QLabel(Tr("Scene"), gp), currow, curcol++);
                         encLayout->addWidget(v_scene_ = new QComboBox(gp), currow, curcol++);
                     }
                     ++currow;
                     {
                         int curcol = 0;
-                        encLayout->addWidget(new QLabel(obs_module_text("VideoResolution"), gp), currow, curcol++);
+                        encLayout->addWidget(new QLabel(Tr("VideoResolution"), gp), currow, curcol++);
                         encLayout->addWidget(v_resolution_ = new QLineEdit("", gp), currow, curcol++);
-                        v_resolution_->setPlaceholderText(obs_module_text("SameAsOBSNow"));
+                        v_resolution_->setPlaceholderText(Tr("SameAsOBSNow"));
                     }
                     ++currow;
                     {
                         int curcol = 0;
-                        encLayout->addWidget(new QLabel(obs_module_text("VideoFPSDenumerator"), gp), currow, curcol++);
+                        encLayout->addWidget(new QLabel(Tr("VideoFPSDenumerator"), gp), currow, curcol++);
                         encLayout->addWidget(v_fpsdenumerator_ = new QComboBox(gp), currow, curcol++);
                     }
                     ++currow;
@@ -438,7 +439,7 @@ public:
                 }
 
                 {
-                    auto gp = new QGroupBox(obs_module_text("AudioSettings"), container_);
+                    auto gp = new QGroupBox(Tr("AudioSettings"), container_);
                     sub_grid->addWidget(gp, 0, 1, 1, 1);
                     auto encLayout = new QGridLayout();
                     int currow = 0;
@@ -446,7 +447,7 @@ public:
                         int curcol = 0;
                         auto sublayout = new QHBoxLayout();
                         sublayout->addWidget(a_share_notify_ = new QLabel(gp), 1);
-                        auto shareButton = new QPushButton(obs_module_text("Btn.EncoderShare"), gp);
+                        auto shareButton = new QPushButton(Tr("Btn.EncoderShare"), gp);
                         sublayout->addWidget(shareButton);
                         encLayout->addLayout(sublayout, currow, curcol++, 1, 2);
 
@@ -460,14 +461,14 @@ public:
                     ++currow;
                     {
                         int curcol = 0;
-                        encLayout->addWidget(new QLabel(obs_module_text("Encoder"), gp), currow, curcol++);
+                        encLayout->addWidget(new QLabel(Tr("Encoder"), gp), currow, curcol++);
                         encLayout->addWidget(aenc_ = new QComboBox(gp), currow, curcol++);
                     }
                     ++currow;
                     const int NUM_MIXER_TRACKS = 6;
                     {
                         int curcol = 0;
-                        encLayout->addWidget(new QLabel(obs_module_text("AudioMixerID"), gp), currow, curcol++);
+                        encLayout->addWidget(new QLabel(Tr("AudioMixerID"), gp), currow, curcol++);
                         encLayout->addWidget(a_mixer_ = new QComboBox(gp), currow, curcol++);
 
                         for(int i = 1; i <= NUM_MIXER_TRACKS; ++i)
@@ -476,7 +477,7 @@ public:
                     ++currow;
                     {
                         int curcol = 0;
-                        encLayout->addWidget(new QLabel(obs_module_text("AudioVODTrack"), gp), currow, curcol++);
+                        encLayout->addWidget(new QLabel(Tr("AudioVODTrack"), gp), currow, curcol++);
                         encLayout->addWidget(a_vod_track_ = new QComboBox(gp), currow, curcol++);
 
                         // Placeholder item for setting no VOD track
@@ -493,11 +494,11 @@ public:
                 }
 
                 {
-                    auto gp = new QGroupBox(obs_module_text("OtherSettings"), container_);
+                    auto gp = new QGroupBox(Tr("OtherSettings"), container_);
                     sub_grid->addWidget(gp, 1, 1, 1, 1);
                     auto otherLayout = new QGridLayout();
-                    otherLayout->addWidget(syncStart_ = new QCheckBox(obs_module_text("SyncStart"), gp), 0, 0);
-                    otherLayout->addWidget(syncStop_ = new QCheckBox(obs_module_text("SyncStop"), gp), 1, 0);
+                    otherLayout->addWidget(syncStart_ = new QCheckBox(Tr("SyncStart"), gp), 0, 0);
+                    otherLayout->addWidget(syncStop_ = new QCheckBox(Tr("SyncStop"), gp), 1, 0);
                     gp->setLayout(otherLayout);
                 }
             }
@@ -505,7 +506,7 @@ public:
         }
         ++currow;
         {
-            auto okbtn = new QPushButton(obs_module_text("OK"), container_);
+            auto okbtn = new QPushButton(Tr("OK"), container_);
             QObject::connect(okbtn, &QPushButton::clicked, [this]() {
                 SaveConfig();
                 auto& global = GlobalMultiOutputConfig();
@@ -626,8 +627,8 @@ public:
             auto old_venc = venc_->currentData();
             std::sregex_token_iterator it(supported_video_encoders_.begin(), supported_video_encoders_.end(), sp, -1), itend;
             venc_->clear();
-	        venc_->addItem(obs_module_text("SameAsOBS"), OBS_STREAMING_ENC_PLACEHOLDER);
-	        venc_->addItem(obs_module_text("SameAsOBSRecording"), OBS_RECORDING_ENC_PLACEHOLDER);
+	        venc_->addItem(Tr("SameAsOBS"), OBS_STREAMING_ENC_PLACEHOLDER);
+	        venc_->addItem(Tr("SameAsOBSRecording"), OBS_RECORDING_ENC_PLACEHOLDER);
             max_video_encoder_placeholder_index = venc_->count() - 1;
 
 	        while(it != itend) {
@@ -645,8 +646,8 @@ public:
             auto old_aenc = aenc_->currentData();
             std::sregex_token_iterator it(supported_audio_encoders_.begin(), supported_audio_encoders_.end(), sp, -1), itend;
             aenc_->clear();
-	        aenc_->addItem(obs_module_text("SameAsOBS"), OBS_STREAMING_ENC_PLACEHOLDER);
-	        aenc_->addItem(obs_module_text("SameAsOBSRecording"), OBS_RECORDING_ENC_PLACEHOLDER);
+	        aenc_->addItem(Tr("SameAsOBS"), OBS_STREAMING_ENC_PLACEHOLDER);
+	        aenc_->addItem(Tr("SameAsOBSRecording"), OBS_RECORDING_ENC_PLACEHOLDER);
             max_audio_encoder_placeholder_index = aenc_->count() - 1;
             
             while(it != itend) {
@@ -686,7 +687,7 @@ public:
 
     void LoadScenes()
     {
-        v_scene_->addItem(obs_module_text("SameAsOBSScene"), "");
+        v_scene_->addItem(Tr("SameAsOBSScene"), "");
 
         using EnumParam = std::vector<std::string>;
         std::vector<std::string> scenes;
@@ -734,12 +735,12 @@ public:
                 sharedTargets += x;
             }
             if (sharedTargets.empty())
-                sharedTargets = obs_module_text("NoShare");
+                sharedTargets = Tr("NoShare");
             return sharedTargets;
         };
 
         auto sharedVideoTargets = GetEncoderShareTargets(false);
-        v_share_notify_->setText(QString::fromUtf8(obs_module_text("EncoderShare") + makeShareNotify(sharedVideoTargets)));
+        v_share_notify_->setText(QString::fromUtf8(Tr("EncoderShare") + makeShareNotify(sharedVideoTargets)));
 
         auto ae = aenc_->currentData();
         if (ae.isValid() && IsSpecialEncoder(ae.toString().toStdString()))
@@ -754,7 +755,7 @@ public:
         }
 
         auto sharedAudioTargets = GetEncoderShareTargets(true);
-        a_share_notify_->setText(QString::fromUtf8(obs_module_text("EncoderShare") + makeShareNotify(sharedAudioTargets)));
+        a_share_notify_->setText(QString::fromUtf8(Tr("EncoderShare") + makeShareNotify(sharedAudioTargets)));
     }
 
     std::vector<std::string> GetEncoderShareTargets(bool isAudio) {
@@ -771,7 +772,7 @@ public:
         }
 
         if (IsSpecialEncoder(configId)) {
-		    return { obs_module_text("NoShare") };
+		    return { Tr("NoShare") };
 	    }
 
         std::vector<std::string> ret;
@@ -1026,7 +1027,7 @@ public:
         auto& global = GlobalMultiOutputConfig();
 
         if (config_->name.empty())
-            config_->name = obs_module_text("NewStreaming");
+            config_->name = Tr("NewStreaming");
 
         LoadTargetConfig(*config_);
 

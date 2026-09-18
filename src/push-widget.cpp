@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "i18n.h"
 #include "helpers.h"
 #include <regex>
 #include <optional>
@@ -419,13 +420,13 @@ class PushWidgetImpl : public PushWidget, public IOBSOutputEventHanlder
                 (!venc && videoConfigId == OBS_RECORDING_ENC_PLACEHOLDER) ||
                 (!aenc && audioConfigId == OBS_RECORDING_ENC_PLACEHOLDER);
 
-            QString reason = obs_module_text(needsRecording ? "Notice.NeedsRecording" : "Notice.NeedsMainStream");
-            QString message = QString::fromUtf8(obs_module_text("Notice.GetEncoderFmt"))
+            QString reason = Tr(needsRecording ? "Notice.NeedsRecording" : "Notice.NeedsMainStream");
+            QString message = QString::fromUtf8(Tr("Notice.GetEncoderFmt"))
                 .arg(QString::fromUtf8(config_->name))
                 .arg(reason);
 
             auto msgbox = new QMessageBox(QMessageBox::Icon::Critical,
-                obs_module_text("Notice.Title"),
+                Tr("Notice.Title"),
                 message,
                 QMessageBox::StandardButton::Ok,
                 this
@@ -595,7 +596,7 @@ public:
         badge_ = new QLabel(headerRow);
         badge_->setFixedSize(18, 18);
         badge_->setAlignment(Qt::AlignCenter);
-        name_ = new QLabel(obs_module_text("NewStreaming"), headerRow);
+        name_ = new QLabel(Tr("NewStreaming"), headerRow);
         statusDot_ = new QLabel(headerRow);
         statusDot_->setFixedSize(9, 9);
         headerLayout->addWidget(badge_);
@@ -605,21 +606,21 @@ public:
         headerRow->setLayout(headerLayout);
         layout->addWidget(headerRow, 0, 0, 1, 3);
 
-        layout->addWidget(btn_ = new QPushButton(obs_module_text("Btn.Start"), this), 1, 0);
+        layout->addWidget(btn_ = new QPushButton(Tr("Btn.Start"), this), 1, 0);
         QObject::connect(btn_, &QPushButton::clicked, [this]() {
             StartStop();
         });
 
-        layout->addWidget(edit_btn_ = new QPushButton(obs_module_text("Btn.Edit"), this), 1, 1);
+        layout->addWidget(edit_btn_ = new QPushButton(Tr("Btn.Edit"), this), 1, 1);
         QObject::connect(edit_btn_, &QPushButton::clicked, [this]() {
             ShowEditDlg();
         });
 
-        layout->addWidget(remove_btn_ = new QPushButton(obs_module_text("Btn.Delete"), this), 1, 2);
+        layout->addWidget(remove_btn_ = new QPushButton(Tr("Btn.Delete"), this), 1, 2);
         QObject::connect(remove_btn_, &QPushButton::clicked, [this]() {
             auto msgbox = new QMessageBox(QMessageBox::Icon::Question,
-                obs_module_text("Question.Title"),
-                obs_module_text("Question.Delete"),
+                Tr("Question.Title"),
+                Tr("Question.Delete"),
                 QMessageBox::Yes | QMessageBox::No,
                 this
             );
@@ -720,25 +721,25 @@ public:
 
         if (!PrepareOutputService())
         {
-            SetMsg(obs_module_text("Error.CreateRtmpService"));
+            SetMsg(Tr("Error.CreateRtmpService"));
             return;
         }
 
         if (!PrepareOutputEncoders())
         {
-            SetMsg(obs_module_text("Error.CreateEncoder"));
+            SetMsg(Tr("Error.CreateEncoder"));
             return;
         }
 
         if (!PrepareEncoderSource())
         {
-            SetMsg(obs_module_text("Error.SceneNotExist"));
+            SetMsg(Tr("Error.SceneNotExist"));
             return;
         }
 
         if (!obs_output_start(output_))
         {
-            SetMsg(obs_module_text("Error.StartOutput"));
+            SetMsg(Tr("Error.StartOutput"));
         }
     }
 
@@ -750,7 +751,7 @@ public:
         if (isUseDelay_) {
             auto res = QMessageBox(QMessageBox::Icon::Information,
                 "?",
-                obs_module_text("Ques.DropDelay"),
+                Tr("Ques.DropDelay"),
                 QMessageBox::StandardButton::Yes | QMessageBox::StandardButton::No,
                 this
             ).exec();
@@ -893,9 +894,9 @@ public:
         GetGlobalService().RunInUIThread([this]() {
             begin_time_ = clock::now();
             remove_btn_->setEnabled(false);
-            btn_->setText(obs_module_text("Status.Stop"));
+            btn_->setText(Tr("Status.Stop"));
             btn_->setEnabled(true);
-            SetMsg(obs_module_text("Status.Connecting"));
+            SetMsg(Tr("Status.Connecting"));
             remove_btn_->setEnabled(false);
             SetStatusDot("#f2c14e");
         });
@@ -905,9 +906,9 @@ public:
     {
         GetGlobalService().RunInUIThread([this]() {
             remove_btn_->setEnabled(false);
-            btn_->setText(obs_module_text("Status.Stop"));
+            btn_->setText(Tr("Status.Stop"));
             btn_->setEnabled(true);
-            SetMsg(obs_module_text("Status.Streaming"));
+            SetMsg(Tr("Status.Streaming"));
 
             ResetInfo();
             timer_->start();
@@ -921,9 +922,9 @@ public:
             timer_->stop();
 
             remove_btn_->setEnabled(false);
-            btn_->setText(obs_module_text("Status.Stop"));
+            btn_->setText(Tr("Status.Stop"));
             btn_->setEnabled(true);
-            SetMsg(obs_module_text("Status.Reconnecting"));
+            SetMsg(Tr("Status.Reconnecting"));
             SetStatusDot("#f2c14e");
         });
     }
@@ -932,9 +933,9 @@ public:
     {
         GetGlobalService().RunInUIThread([this]() {
             remove_btn_->setEnabled(false);
-            btn_->setText(obs_module_text("Status.Stop"));
+            btn_->setText(Tr("Status.Stop"));
             btn_->setEnabled(true);
-            SetMsg(obs_module_text("Status.Streaming"));
+            SetMsg(Tr("Status.Streaming"));
 
             ResetInfo();
             timer_->start();
@@ -948,9 +949,9 @@ public:
             timer_->stop();
 
             remove_btn_->setEnabled(false);
-            btn_->setText(obs_module_text("Status.Stop"));
+            btn_->setText(Tr("Status.Stop"));
             btn_->setEnabled(true);
-            SetMsg(obs_module_text("Status.Stopping"));
+            SetMsg(Tr("Status.Stopping"));
             SetStatusDot("#f2c14e");
         });
     }
@@ -962,7 +963,7 @@ public:
             timer_->stop();
 
             remove_btn_->setEnabled(true);
-            btn_->setText(obs_module_text("Btn.Start"));
+            btn_->setText(Tr("Btn.Start"));
             btn_->setEnabled(true);
             SetMsg(u8"");
 
@@ -973,23 +974,23 @@ public:
                     SetStatusDot("#3a4050");
                     break;
                 case -1:
-                    SetMsg(obs_module_text("Error.WrongRTMPUrl"));
+                    SetMsg(Tr("Error.WrongRTMPUrl"));
                     SetStatusDot("#ff3b5c");
                     break;
                 case -2:
-                    SetMsg(obs_module_text("Error.ServerConnect"));
+                    SetMsg(Tr("Error.ServerConnect"));
                     SetStatusDot("#ff3b5c");
                     break;
                 case -3:
-                    SetMsg(obs_module_text("Error.ServerHandshake"));
+                    SetMsg(Tr("Error.ServerHandshake"));
                     SetStatusDot("#ff3b5c");
                     break;
                 case -4:
-                    SetMsg(obs_module_text("Error.ServerRefuse"));
+                    SetMsg(Tr("Error.ServerRefuse"));
                     SetStatusDot("#ff3b5c");
                     break;
                 default:
-                    SetMsg(obs_module_text("Error.Unknown"));
+                    SetMsg(Tr("Error.Unknown"));
                     SetStatusDot("#ff3b5c");
                     break;
             }
