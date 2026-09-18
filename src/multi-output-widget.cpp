@@ -757,7 +757,7 @@ void MultiOutputWidget::RestartConfluenceServer()
     // stop.ps1 mata el PID guardado si sigue vivo, start-hidden.vbs lanza
     // uno nuevo oculto. node server.js ya sale solo sin romper nada si el
     // puerto termina ocupado por otra instancia (ver server.js).
-    QProcess::execute("powershell", { "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", dir + "/scripts/stop.ps1" });
+    QProcess::execute("powershell.exe", { "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", dir + "/scripts/stop.ps1" });
     QProcess::startDetached("wscript.exe", { dir + "/scripts/start-hidden.vbs" });
 
     QTimer::singleShot(2000, this, [this]() {
@@ -793,7 +793,7 @@ void MultiOutputWidget::RepairConfluenceServer()
             }
             npm->deleteLater();
 
-            QProcess::execute("powershell", { "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", dir + "/scripts/stop.ps1" });
+            QProcess::execute("powershell.exe", { "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", dir + "/scripts/stop.ps1" });
             QProcess::startDetached("wscript.exe", { dir + "/scripts/start-hidden.vbs" });
 
             QTimer::singleShot(2000, this, [this]() {
@@ -914,4 +914,4 @@ PushWidget* MultiOutputWidget::FindPushWidgetById(const QString& targetId)
         }
     }
     return nullptr;
-}
+}
