@@ -17,6 +17,9 @@
 !README.md
 !install.ps1
 !CONFLUENCE-INSTALL.md
+!/docs
+!/docs/screenshots
+!/docs/screenshots/*.png
 
 # Exclude lock files
 *.lock.json
