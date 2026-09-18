@@ -1,4 +1,4 @@
-🇬🇧 **English** | [🇪🇸 Español](CONFLUENCE-INSTALL.md)
+🇬🇧 **English** | [🇪🇸 Español](CONFLUENCE-INSTALL.es.md)
 
 # Reinstalling "Confluence Multistream" (after reinstalling OBS)
 
