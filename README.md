@@ -23,6 +23,14 @@ This plugin is one piece of **Confluence Suite** — each repo installs separate
 | **confluence-multistream** (this repo) | Native OBS plugin for sending video to several RTMP destinations at once. |
 | [confluence-streamdeck-beta](https://github.com/NoxTaipan/confluence-streamdeck-beta) | Elgato Stream Deck plugin to control everything above from physical buttons. Optional. |
 
+## Support
+
+Everything I publish on GitHub — including this repo — is free and open source, always. If it's useful to you and you want to support its upkeep, buy me a coffee:
+
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/noxtaipan)
+
+Separately, on [Gumroad](https://noxtaipan.gumroad.com/) I sell other products — that one does cost money, to be clear.
+
 Everything below this line is the original fork's own technical README, describing the websocket API this fork adds on top of upstream `obs-multi-rtmp`.
 
 ---
