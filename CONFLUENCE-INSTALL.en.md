@@ -4,11 +4,15 @@
 
 This is the obs-multi-rtmp fork (with websocket support) built for NOX TAIPAN, already with Confluence's dark/green theme and IBM Plex Sans font.
 
+> **Cloned this repo to try it yourself (you're not NOX TAIPAN)?** This guide is written as a personal reminder for reinstalling after wiping/reinstalling OBS, not as a general installer for other people. Two things to know before continuing:
+> 1. **There's no compiled binary in the repo.** `build_x64/` is gitignored (it only exists on the author's machine) and there are no [Releases](https://github.com/NoxTaipan/confluence-multistream/releases) published. Skip straight to **["If you need to rebuild from scratch"](#if-you-need-to-rebuild-from-scratch)** — you'll need to build it yourself with Visual Studio + CMake.
+> 2. **The Confluence status row won't work for you.** The green/gray dot and Restart/Repair buttons depend on an absolute path hardcoded to the author's machine (`ConfluenceDir()` in `src/multi-output-widget.cpp`) and on running your own copy of the Confluence server (a private repo, not published). Plain RTMP multistreaming — this fork's main feature — works fine without it.
+
 <img src="docs/screenshots/multistream.png" alt="Confluence Multistream" width="360" />
 
-Besides starting/stopping RTMP destinations, this dock shows the Confluence server's status (green/gray dot) and has **Restart** and **Repair** buttons to restart it without leaving OBS — see `../confluence/README.md`, "Startup" section.
+Besides starting/stopping RTMP destinations, this dock shows the Confluence server's status (green/gray dot) and has **Restart** and **Repair** buttons to restart it without leaving OBS — this relies on the private `confluence` hub's startup scripts (not published on GitHub).
 
-If you reinstall OBS or switch PCs, **you don't need to rebuild** — the build is already ready in `build_x64/rundir/Release/`. Just run:
+If you reinstall OBS or switch PCs (as NOX TAIPAN), **you don't need to rebuild** — the build is already ready in `build_x64/rundir/Release/`. Just run:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File install.ps1

@@ -1,3 +1,15 @@
+# Confluence Multistream
+
+Personal fork of [sorayuki/obs-multi-rtmp](https://github.com/sorayuki/obs-multi-rtmp) (a native OBS Studio plugin for sending video to several RTMP destinations at once), rebranded and extended for [NOX TAIPAN](https://ko-fi.com/noxtaipan)'s **[Confluence Suite](https://github.com/NoxTaipan/confluence-beta)**: dark/green theme, IBM Plex Sans font, a live ES/EN toggle, and a dock row that shows/restarts a companion Confluence server.
+
+- **Install / usage guide:** [CONFLUENCE-INSTALL.md](CONFLUENCE-INSTALL.md) ([English](CONFLUENCE-INSTALL.en.md))
+- **No prebuilt binary is published** — `build_x64/` isn't committed and there are no [Releases](https://github.com/NoxTaipan/confluence-multistream/releases). Building from source requires Visual Studio ("Desktop development with C++") + CMake; see the install guide's rebuild section.
+- The Confluence status row is wired to an absolute path hardcoded to the author's machine — it won't do anything for other installs, but plain RTMP multistreaming (this fork's actual feature, documented below) works standalone.
+
+Everything below this line is the original fork's own technical README, describing the websocket API this fork adds on top of upstream `obs-multi-rtmp`.
+
+---
+
 # Fork of main obs-multi-rtmp adding OBS websocket server API support
 
 Adds OBS websocket server API support to the obs-multi-rtmp plugin.
