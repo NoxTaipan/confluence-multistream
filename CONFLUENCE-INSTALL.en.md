@@ -43,6 +43,8 @@ cmake --build . --config Release
 
 This leaves the `.dll` in `build_x64/rundir/Release/` (or `build_x64/Release/`, depending on the CMake version) for `install.ps1` to copy into OBS.
 
+> ⚡ Instead of running `install.ps1` from this repo directly, you can also run `install.bat` from [confluence-beta](https://github.com/NoxTaipan/confluence-beta) and pick "Only Multistream" (or "Everything") — once it finds a `build_x64/rundir/Release/obs-multi-rtmp.dll` here, it runs this same `install.ps1` for you. It cannot compile the plugin for you (there's no way around the Visual Studio + CMake step above), only copy an already-built one into OBS. Full guide to every way of installing the whole suite: [INSTALL.en.md](https://github.com/NoxTaipan/confluence-beta/blob/master/INSTALL.en.md) ([Español](https://github.com/NoxTaipan/confluence-beta/blob/master/INSTALL.md)).
+
 ## Full suite
 
 This plugin is one piece of **Confluence Suite** — each one installs separately, use whichever you need:

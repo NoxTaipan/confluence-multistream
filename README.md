@@ -8,6 +8,7 @@ Personal fork of [sorayuki/obs-multi-rtmp](https://github.com/sorayuki/obs-multi
 
 **Full install / usage guide:** [CONFLUENCE-INSTALL.md](CONFLUENCE-INSTALL.md) ([English](CONFLUENCE-INSTALL.en.md) · [Español](CONFLUENCE-INSTALL.es.md))
 
+- **Easiest path:** build the plugin from source (see below), then run [confluence-beta](https://github.com/NoxTaipan/confluence-beta)'s `install.bat` and pick "Only Multistream" — it finds the build and copies it into OBS for you. It can't do the build itself; see the [suite-wide install guide](https://github.com/NoxTaipan/confluence-beta/blob/master/INSTALL.en.md) for every option.
 - **No prebuilt binary is published** — `build_x64/` isn't committed and there are no [Releases](https://github.com/NoxTaipan/confluence-multistream/releases). You need to build from source: Visual Studio with the "Desktop development with C++" workload + CMake, then run the `Build commands` below (name the build folder `build_x64`, not `build`).
 - Once built, run `install.ps1` (as admin, with OBS closed) — it copies the `.dll` and its data folder into your OBS install.
 - Then, from OBS's UI: **Docks → Custom Browser Docks** → add the Confluence dashboards you want (URLs and full steps in the install guide).
